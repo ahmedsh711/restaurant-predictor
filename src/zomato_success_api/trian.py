@@ -18,7 +18,7 @@ pipeline = Pipeline([
     ("classifier", RandomForestClassifier(n_estimators=100, random_state=42))
 ])
 
-# pipeline.fit(X_train, y_train)
+pipeline.fit(X_train, y_train)
 joblib.dump(pipeline, 'models/restaurant_model.pkl')
 
 # Define input feature types for ONNX (batch size is None, feature dimension is 1)
@@ -32,4 +32,4 @@ onnx_model = convert_sklearn(pipeline, initial_types=initial_types)
 
 # Save the ONNX model to disk
 with open("models/restaurant_model.onnx", "wb") as f:
-    f.write(onnx_model.SerializeToString())
+    f.write(onnx_model.SerializeToString())
