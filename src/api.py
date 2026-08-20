@@ -1,8 +1,8 @@
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
-from zomato_success_api.model import ZomatoSuccessONNXModel
-from zomato_success_api.schemas import PredictRequest
+from src.model import ZomatoSuccessModel
+from src.schemas import PredictRequest
 
 model: ZomatoSuccessONNXModel | None = None
 

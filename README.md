@@ -12,3 +12,18 @@ Visit `http://localhost:8000/docs` to test the API.
 ## Run via Docker
 1. `docker build -t zomato-api .`
 2. `docker run -p 8000:8000 zomato-api`
+
+## Folder Structure
+```
+zomato-mlops/
+├── src/
+│   ├── api.py                  # FastAPI app
+│   ├── model.py                # ONNX model loading & prediction
+│   ├── schemas.py              # Pydantic request/response models
+│   └── train.py                # (Optional) Training script
+├── Dockerfile                  # Build instructions
+├── requirements.txt          # Dependencies
+├── pyproject.toml              # Optional (uv)
+├── models/                     # Trained ONNX model
+└── README.md                   # This file
+```
