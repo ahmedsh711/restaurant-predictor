@@ -1,16 +1,16 @@
-import joblib
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import RandomForestClassifier
 
 from skl2onnx import convert_sklearn
-from skl2onnx.common.data_types import StringTensorType, FloatTensorType
+from skl2onnx.common.data_types import FloatTensorType, StringTensorType
 
 preprocressor = ColumnTransformer(
     [
         ("cat", OneHotEncoder(), ["location", "cuisines_type"]),
-    ]
+    ],
+    remainder= 'passthrough'
 )
 
 pipeline = Pipeline([
@@ -19,12 +19,13 @@ pipeline = Pipeline([
 ])
 
 pipeline.fit(X_train, y_train)
-joblib.dump(pipeline, 'models/restaurant_model.pkl')
 
 # Define input feature types for ONNX (batch size is None, feature dimension is 1)
 initial_types = [
     ('location', StringTensorType([None, 1])),
     ('cuisines_type', StringTensorType([None, 1])),
+    ('approx_cost_for_two', FloatTensorType([None, 1])),
+    ('online_order', FloatTensorType([None, 1]))
 ]
 
 # Convert the scikit-learn pipeline to ONNX format
