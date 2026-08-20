@@ -27,7 +27,7 @@ class ZomatoSuccessModel(ModelBase):
         # Prepare inputs for ONNX Runtime:
         inputs = {
             'location': np.array([[features['location']]], dtype=object),
-            'cusine_type' : np.array([[features['cusine_type']]], dtype= 'object'),
+            'cuisine_type' : np.array([[features['cusine_type']]], dtype= 'object'),
             'approx_cost_for_two' : np.array([[features['approx_cost_for_two']]], dtype=np.float32),
             'online_order' : np.array([[features['online_order']]], dtype=np.float32),
         }

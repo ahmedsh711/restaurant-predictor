@@ -4,14 +4,14 @@ from fastapi import FastAPI, HTTPException
 from src.model import ZomatoSuccessModel
 from src.schemas import PredictRequest
 
-model: ZomatoSuccessONNXModel | None = None
+model: ZomatoSuccessModel | None = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global model
     # Load ONNX model on server startup
     model_path = os.getenv("MODEL_PATH", "models/restaurant_model.onnx")
-    model = ZomatoSuccessONNXModel(model_path)
+    model = ZomatoSuccessModel(model_path)
     model.load()
     yield
 
