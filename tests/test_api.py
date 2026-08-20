@@ -1,5 +1,7 @@
 from fastapi.testclient import TestClient
 from src.api import app
+
+
 def test_predict_endpoint_success():
     with TestClient(app) as client:
         payload = {
