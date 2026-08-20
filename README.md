@@ -1,42 +1,29 @@
-# Zomato Restaurant Success Prediction
+# Zomato Success API
 
-Predicting whether a restaurant in Bangalore will be successful based on Zomato data.
+Predicts if a restaurant will clear a 3.75 rating.
 
-## What This Does
+## Run Locally (3 commands)
+1. `git clone https://github.com/yourname/zomato-mlops.git && cd zomato-mlops`
+2. `uv sync`
+3. `uv run uvicorn src.api:app --reload`
 
-This project predicts if a restaurant will succeed (get a rating of 3.75 or higher) by looking at things like location, cuisine type, pricing, and whether they offer online ordering.
+Visit `http://localhost:8000/docs` to test the API.
 
-## The Data
+## Run via Docker
+1. `docker build -t zomato-api .`
+2. `docker run -p 8000:8000 zomato-api`
 
-Uses 51,000+ Bangalore restaurants from Zomato with info like:
-- Restaurant location and type
-- Cuisines offered
-- Online ordering and table booking options
-- Ratings and votes
-- Average cost for two people
-
-## Project Files
-
-- `data_pipeline.py` - Cleans and prepares the data
-- `utils.py` - Helper functions
-- `model.py` - Machine learning model
-- `train.py` - Trains and tests the model
-- `inference.py` - Makes predictions
-- `streamlit_app.py` - Web interface to try it out
-
-## How to Run
-
-```bash
-# Install requirements
-pip install -r requirements.txt
-
-# Prepare the data
-python src/data_pipeline.py
-
-# Train the model
-python src/train.py
-
-# Launch web app
-streamlit run src/streamlit_app.py
+## Folder Structure
 ```
-
+zomato-mlops/
+├── src/
+│   ├── api.py                  # FastAPI app
+│   ├── model.py                # ONNX model loading & prediction
+│   ├── schemas.py              # Pydantic request/response models
+│   └── train.py                # (Optional) Training script
+├── Dockerfile                  # Build instructions
+├── requirements.txt          # Dependencies
+├── pyproject.toml              # Optional (uv)
+├── models/                     # Trained ONNX model
+└── README.md                   # This file
+```

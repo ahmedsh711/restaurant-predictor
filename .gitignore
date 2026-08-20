@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+models/*.pkl
+models/*.onnx
+data/raw/
+.pytest_cache/
+.coverage
+htmlcov/
+extracted_code*.py
