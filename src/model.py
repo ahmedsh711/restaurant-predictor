@@ -3,6 +3,10 @@ import pickle
 import logging
 import numpy as np
 import onnxruntime as rt
+from src.utils import timed
+from src.logging_conf import get_logger
+
+logger = get_logger(__name__)
 
 
 # ─── Constants (must match train.py exactly) ──────────────────────────────────
@@ -28,7 +32,11 @@ TOP_CUISINES = [
 
 class ModelBase(ABC):
     @abstractmethod
-    def predict(self, features: dict) -> dict:
+    def predict_one(self, features: dict) -> dict:
+        pass
+
+    @abstractmethod
+    def predict_batch(self, features_list: list[dict]) -> list[dict]:
         pass
 
 
@@ -66,7 +74,7 @@ class ZomatoSuccessModel(ModelBase):
 
     def _preprocess(self, features: dict) -> np.ndarray:
         """
-        Convert raw user input into the 48-feature vector
+        Convert raw user input into the 49-feature vector
         the ONNX model expects. Mirrors train.py preprocessing exactly.
         """
         row = []
@@ -114,12 +122,16 @@ class ZomatoSuccessModel(ModelBase):
 
         return np.array([row], dtype=np.float32)
 
-    def predict(self, features: dict) -> dict:
+    @timed
+    def predict_one(self, features: dict) -> dict:
         if not self.isloaded:
             raise RuntimeError("Model not loaded. Call .load() first.")
 
-        # Preprocess raw input → 48-feature vector
+        # Preprocess raw input → 49-feature vector
         input_array = self._preprocess(features)
+        
+        # Requirement: DEBUG level for feature vector
+        logger.debug("Feature vector generated", input_array=input_array.tolist())
 
         # Run ONNX inference
         input_name = self._session.get_inputs()[0].name
@@ -132,3 +144,7 @@ class ZomatoSuccessModel(ModelBase):
             "success_probability": probability,
             "will_succeed": probability > 0.5
         }
+        
+    def predict_batch(self, features_list: list[dict]) -> list[dict]:
+        """Predict success for a list of restaurants."""
+        return [self.predict_one(features) for features in features_list]

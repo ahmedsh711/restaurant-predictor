@@ -112,7 +112,7 @@ def test_predict_with_mock_model(client, monkeypatch):
     """Verify API contract without a real model using monkeypatch."""
     mock = MagicMock()
     mock.isloaded = True
-    mock.predict.return_value = {"success_probability": 0.9, "will_succeed": True}
+    mock.predict_one.return_value = {"success_probability": 0.9, "will_succeed": True}
 
     # Temporarily replace the loaded model on the running app
     original_model = client.app.state.model
@@ -127,4 +127,4 @@ def test_predict_with_mock_model(client, monkeypatch):
     data = response.json()
     assert data["success_probability"] == 0.9
     assert data["will_succeed"] is True
-    mock.predict.assert_called_once()
+    mock.predict_one.assert_called_once()

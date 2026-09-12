@@ -15,18 +15,17 @@ import structlog
 from src.logging_conf import configure_logging, get_logger, correlation_id_var
 from src.model import ZomatoSuccessModel
 from src.schemas import PredictRequest, PredictResponse, BatchPredictRequest, BatchPredictResponse
+from src.config import settings
 
 # Configure logging at import time
 configure_logging()
 logger = get_logger(__name__)
 
-API_KEY = os.getenv("API_KEY", "supersecretkey")
-MODEL_VERSION = os.getenv("MODEL_VERSION", "0.2.0")
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=True)
 
 
 def get_api_key(api_key_header: str = Security(api_key_header)) -> str:
-    if api_key_header != API_KEY:
+    if api_key_header != settings.api_key:
         raise HTTPException(status_code=403, detail="Could not validate API key")
     return api_key_header
 
@@ -34,8 +33,8 @@ def get_api_key(api_key_header: str = Security(api_key_header)) -> str:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load model artifacts once at startup — not per-request."""
-    model_path = os.getenv("MODEL_PATH", "models/restaurant_model.onnx")
-    artifacts_dir = os.getenv("ARTIFACTS_DIR", "models")
+    model_path = settings.model_path
+    artifacts_dir = settings.artifacts_dir
     model = ZomatoSuccessModel(model_path, artifacts_dir)
     try:
         model.load()
@@ -113,12 +112,12 @@ def metadata(request: Request) -> dict[str, Any]:
     if model is not None and model.isloaded:
         try:
             import hashlib
-            with open(os.getenv("MODEL_PATH", "models/restaurant_model.onnx"), "rb") as f:
+            with open(settings.model_path, "rb") as f:
                 artifact_hash = hashlib.md5(f.read()).hexdigest()
         except Exception:
             artifact_hash = None
     return {
-        "model_version": MODEL_VERSION,
+        "model_version": settings.model_version,
         "framework": "LightGBM + ONNX Runtime",
         "feature_count": 49,
         "artifact_hash": artifact_hash,
@@ -150,7 +149,7 @@ def predict(
         logger.warning("Prediction with zero votes — may be less reliable")
 
     t0 = time.perf_counter()
-    raw = model.predict(features)
+    raw = model.predict_one(features)
     latency_ms = (time.perf_counter() - t0) * 1000.0
 
     logger.info(
@@ -162,7 +161,7 @@ def predict(
     return PredictResponse(
         success_probability=raw["success_probability"],
         will_succeed=raw["will_succeed"],
-        model_version=MODEL_VERSION,
+        model_version=settings.model_version,
         correlation_id=correlation_id,
         latency_ms=round(latency_ms, 3),
     )
@@ -186,13 +185,13 @@ def predict_batch(
     for item in request.items:
         features = item.model_dump()
         t0 = time.perf_counter()
-        raw = model.predict(features)
+        raw = model.predict_one(features)
         latency_ms = (time.perf_counter() - t0) * 1000.0
         results.append(
             PredictResponse(
                 success_probability=raw["success_probability"],
                 will_succeed=raw["will_succeed"],
-                model_version=MODEL_VERSION,
+                model_version=settings.model_version,
                 correlation_id=correlation_id,
                 latency_ms=round(latency_ms, 3),
             )
