@@ -1,28 +1,23 @@
 # ─── Stage 1: Builder ─────────────────────────────────────────────────────────
-FROM python:3.10-slim-bookworm AS builder
-WORKDIR /app
+FROM python:3.11-slim AS builder
+WORKDIR /build
 
-RUN pip install uv
-COPY pyproject.toml .
-
-# Layer caching: dependencies first, then code
-RUN uv sync --no-dev
+COPY pyproject.toml ./
 COPY src/ ./src/
 
+RUN pip install --no-cache-dir --prefix=/install .
+
 # ─── Stage 2: Runtime ─────────────────────────────────────────────────────────
-FROM python:3.10-slim AS runtime
+FROM python:3.11-slim AS runtime
 
 RUN useradd --create-home --uid 1000 appuser
 
+COPY --from=builder /install /usr/local
+COPY --chown=appuser:appuser models/ /app/models/
+
 WORKDIR /app
-
-COPY --from=builder /app/.venv /app/.venv
-COPY --chown=appuser:appuser src/ ./src/
-COPY --chown=appuser:appuser models/ ./models/
-
 USER appuser
 
-ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 \

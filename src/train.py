@@ -1,6 +1,7 @@
 import os
 import pathlib
 import pickle
+import logging
 import numpy as np
 import pandas as pd
 from sklearn.pipeline import Pipeline
@@ -14,6 +15,7 @@ from skl2onnx.common.data_types import FloatTensorType, StringTensorType, Int64T
 from skl2onnx.common.shape_calculator import calculate_linear_classifier_output_shapes
 from onnxmltools.convert.lightgbm.operator_converters.LightGbm import convert_lightgbm
 
+logging.basicConfig(level=logging.INFO)
 
 # ─── Constants (aligned with the notebook's preprocessing) ───────────────────
 
@@ -50,11 +52,11 @@ def create_target(x):
 
 # ─── 1. Load & Clean Data ────────────────────────────────────────────────────
 
-print("Loading data...")
+logging.info("Loading data...")
 dataset_path = pathlib.Path(__file__).parent.parent / "data" / "raw" / "zomato.csv"
 df = pd.read_csv(dataset_path)
 
-print("Cleaning data...")
+logging.info("Cleaning data...")
 df['rate'] = df['rate'].apply(clean_rate)
 df.dropna(subset=['rate'], inplace=True)
 df['success'] = df['rate'].apply(create_target)
@@ -109,16 +111,16 @@ feature_columns = (
     + [f'cuisine_{c}' for c in TOP_CUISINES]
 )
 
-print(f"Total features: {len(feature_columns)}")
+logging.info(f"Total features: {len(feature_columns)}")
 df = df.dropna(subset=feature_columns + ['success'])
 X_train = df[feature_columns].astype(float)
 y_train = df['success']
-print(f"Training samples: {len(X_train)}")
+logging.info(f"Training samples: {len(X_train)}")
 
 
 # ─── 3. Train LightGBM (best hyperparameters from notebook) ──────────────────
 
-print("Training model...")
+logging.info("Training model...")
 model = LGBMClassifier(
     learning_rate=0.01,
     max_depth=15,
@@ -129,12 +131,12 @@ model = LGBMClassifier(
 model.fit(X_train, y_train)
 
 accuracy = model.score(X_train, y_train)
-print(f"Training accuracy: {accuracy:.4f}")
+logging.info(f"Training accuracy: {accuracy:.4f}")
 
 
 # ─── 4. Save artifacts ───────────────────────────────────────────────────────
 
-print("Saving model...")
+logging.info("Saving model...")
 os.makedirs("models", exist_ok=True)
 
 # Save as pickle (for direct Streamlit/Python usage)
@@ -153,7 +155,7 @@ with open("models/city_freq_map.pkl", "wb") as f:
     pickle.dump(city_freq_map, f)
 
 # Save ONNX version
-print("Converting to ONNX...")
+logging.info("Converting to ONNX...")
 update_registered_converter(
     LGBMClassifier,
     'LightGbmLGBMClassifier',
@@ -173,5 +175,5 @@ onnx_model = convert_sklearn(
 with open("models/restaurant_model.onnx", "wb") as f:
     f.write(onnx_model.SerializeToString())
 
-print(f"Done! Saved {len(feature_columns)}-feature model to models/")
-print("Artifacts: restaurant_model.onnx, restaurant_model.pkl, feature_names.pkl, location_freq_map.pkl, city_freq_map.pkl")
+logging.info(f"Done! Saved {len(feature_columns)}-feature model to models/")
+logging.info("Artifacts: restaurant_model.onnx, restaurant_model.pkl, feature_names.pkl, location_freq_map.pkl, city_freq_map.pkl")
